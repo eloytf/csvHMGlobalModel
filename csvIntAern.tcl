@@ -70,6 +70,26 @@ proc isIDTaken {entity id} {
 }
 
 
+proc isSolverIDTaken {entity id} {
+    #returns 1 if id used in hm
+    #0 otherwise
+    hm_createmark $entity 1 "advanced" all
+    set entityList [hm_getmark $entity 1]
+    set entitySolverList {}
+    foreach ent $entityList {
+        lappend entitySolverList [lindex [hm_getsolverid2 $entity $ent] 0]
+    }
+    if {[lsearch $entitySolverList $id]==-1} {
+        return 0
+    } else {
+        return 1
+    }
+
+
+}
+
+
+
 proc updateElements {propname elemList {force True} } {
     #assigns propname to elemlist
     #if force==True, empties the property, i.e., only elements in elemList have propname assigned
@@ -95,7 +115,7 @@ proc updateElements {propname elemList {force True} } {
             tk_messageBox -message "Some elements on the list may not exist in HM model"
             }
         }
-    # }
+
 
 }
 proc CreateProp {propname attributeslist} {
@@ -104,7 +124,7 @@ proc CreateProp {propname attributeslist} {
     #calls updateElements
     #returns none (could easily return new id)
     
-    if {[isIDTaken "props" [lindex $attributeslist 0]]} {
+    if {[isSolverIDTaken "props" [lindex $attributeslist 0]]} {
         tk_messageBox -message "Property ID is already taken. Renumbering arbitrarily"
         *createentity props cardimage=PSHELL name=$propname
         *createmark props 1 -1
@@ -143,7 +163,7 @@ proc UpdateProp {propname attributeslist} {
     #calls updateElements
     #returns none (could easily return new id)
    
-    if {[isIDTaken "props" [lindex $attributeslist 0]]} {
+    if {[isSolverIDTaken "props" [lindex $attributeslist 0]]} {
         tk_messageBox -message "Property ID is already taken. Leaving ID as it is in HM"
         
         set matname [lindex $attributeslist 2]
@@ -225,3 +245,4 @@ proc Main {} {
     }
 }
 
+Main
