@@ -1,3 +1,44 @@
+ #####################################################
+# Procedure name:
+#    _performance
+#
+# Synopsis:
+#	Define optimized parameters to fasten process 
+#
+# Input arguments: None
+#
+# Return: Nothing
+#####################################################
+proc _performance {} {
+    *retainmarkselections 1    
+    *entityhighlighting 0    
+    hm_commandfilestate 0   
+	hm_blockerrormessages 1 	
+    hm_blockmessages 1    
+    hwbrowsermanager view flush 0
+}
+
+#####################################################
+# Procedure name:
+#    _normal
+#
+# Synopsis:
+#	Return to usual parameters of GUI 
+#	Need to be called where _performance was used
+#
+# Input arguments: None
+#
+# Return: Nothing
+#####################################################
+proc _normal {} {
+    *retainmarkselections 0    
+    *entityhighlighting 1    
+    hm_commandfilestate 1  
+	hm_blockerrormessages 0	
+    hm_blockmessages 0    
+    hwbrowsermanager view flush 1
+}
+
 proc readCSV {path} {
     #requiere csv con elementos separados por espacios
     set chan [open $path r]
@@ -125,7 +166,7 @@ proc CreateProp {propname attributeslist} {
     #returns none (could easily return new id)
     
     if {[isSolverIDTaken "props" [lindex $attributeslist 0]]} {
-        tk_messageBox -message "Property ID is already taken. Renumbering arbitrarily"
+        # tk_messageBox -message "Property ID is already taken. Renumbering arbitrarily"
         *createentity props cardimage=PSHELL name=$propname
         *createmark props 1 -1
         set id [hm_getmark props 1]
@@ -157,6 +198,93 @@ proc CreateProp {propname attributeslist} {
     }
     
 }
+proc CreatePropForce {propname attributeslist} {
+    #Creates Property with name propname with attributes (id, thickness, material and elementlist)
+    #If Id is already taken, renumbers arbirarily the old one
+    #calls updateElements
+    #returns none (could easily return new id)
+    
+    if {[isSolverIDTaken "props" [lindex $attributeslist 0]]} {
+        # tk_messageBox -message "Property ID is already taken. Renumbering arbitrarily"
+        *createentity props cardimage=PSHELL name=$propname
+        *createmark props 1 -1
+        set id [hm_getmark props 1]
+        
+        set matname [lindex $attributeslist 2]
+        
+        if {![isMatInHM $matname]} {
+    
+            *createentity mats cardimage=MAT1 name=$matname
+        
+        }
+        
+        *setvalue props name=$propname STATUS=1 95=[lindex $attributeslist 1] material={mats [hm_getentityvalue material $matname id 0]}
+        updateElements $propname [lindex $attributeslist 3] 
+        # Write renumber of props to log
+    } else {
+        *createentity props cardimage=PSHELL name=$propname
+
+        set matname [lindex $attributeslist 2]
+        
+        if {![isMatInHM $matname]} {
+    
+            *createentity mats cardimage=MAT1 name=$matname
+        
+        }
+        
+        *setvalue props name=$propname id={props [lindex $attributeslist 0]} STATUS=1 95=[lindex $attributeslist 1] material={mats [hm_getentityvalue material $matname id 0]}
+        updateElements $propname [lindex $attributeslist 3]
+    }
+    
+}
+
+proc CreatePropForce {propname attributeslist} {
+    #Creates Property with name propname with attributes (id, thickness, material and elementlist)
+    #If Id is already taken, renumbers arbirarily the old one
+    #calls updateElements
+    #returns none (could easily return new id)
+    
+    if {[isSolverIDTaken "props" [lindex $attributeslist 0]]} {
+        # tk_messageBox -message "Property ID is already taken. Renumbering old one arbitrarily"
+        *createentity props cardimage=PSHELL name=$propname
+        *createmark props 1 -1
+        #cuidado con internal id
+        *createmark props 2 [hm_getinternalid "two_idpool" [lindex $attributeslist 0] -bypoolname]
+        #cuidado con 999999 (chequear que está libre)
+        *renumbersolverid property 2 999999 1 0 0 0 0 0.0
+        *renumbersolverid property 1 [lindex $attributeslist 0] 1 0 0 0 0 0.0
+        *renumbersolverid property 2 [hm_getmark property 1] 1 0 0 0 0 0.0
+
+        set id [hm_getmark props 1]
+        
+        set matname [lindex $attributeslist 2]
+        
+        if {![isMatInHM $matname]} {
+    
+            *createentity mats cardimage=MAT1 name=$matname
+        
+        }
+        
+        *setvalue props name=$propname STATUS=1 95=[lindex $attributeslist 1] material={mats [hm_getentityvalue material $matname id 0]}
+        updateElements $propname [lindex $attributeslist 3] 
+        # Write renumber of props to log
+    } else {
+        *createentity props cardimage=PSHELL name=$propname
+
+        set matname [lindex $attributeslist 2]
+        
+        if {![isMatInHM $matname]} {
+    
+            *createentity mats cardimage=MAT1 name=$matname
+        
+        }
+        
+        *setvalue props name=$propname id={props [lindex $attributeslist 0]} STATUS=1 95=[lindex $attributeslist 1] material={mats [hm_getentityvalue material $matname id 0]}
+        updateElements $propname [lindex $attributeslist 3]
+    }
+    
+}
+
 proc UpdateProp {propname attributeslist} {
     #Updates Property with attributes (id, thickness, material and elementlist)
     #If Id is already taken, property id is not updated
@@ -229,7 +357,8 @@ proc updateHM {propname attributeslist} {
     
     } else {
     
-    CreateProp $propname $attributeslist
+    # CreateProp $propname $attributeslist
+    CreatePropForce $propname $attributeslist
     
     }
 
@@ -244,5 +373,6 @@ proc Main {} {
        *mixedpropertywarning 1
     }
 }
-
+_performance
 Main
+_normal
